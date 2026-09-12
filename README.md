@@ -1,6 +1,6 @@
 # BlueContractor
 
-A contractor estimating app: turn job-site photos and job details into profitable, accurate estimates. Built with React + Vite + Tailwind, backed by Supabase (Postgres, Auth, Storage, Edge Functions) and Anthropic's Claude API for AI-assisted estimation.
+BlueContractor is an estimating and pricing platform for independent contractors that helps them calculate job costs, account for hidden expenses, and create profitable estimates quickly. Built with React + Vite + Tailwind, backed by Supabase (Postgres, Auth, Storage, Edge Functions) and Anthropic's Claude API for AI-assisted estimation.
 
 ## Prerequisites
 
