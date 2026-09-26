@@ -99,17 +99,17 @@ export default function EstimateDetail() {
         </div>
 
         <div className="grid grid-cols-3 gap-3 pt-2">
-          <div className="rounded-lg bg-secondary/30 p-3 text-center">
-            <p className="text-xs text-muted-foreground">Minimum</p>
-            <p className="text-base font-bold text-amber-400">{formatCurrency(e.minimum_price)}</p>
+          <div className="min-w-0 rounded-lg bg-secondary/30 p-3 text-center">
+            <p className="text-[10px] text-muted-foreground leading-tight">Minimum</p>
+            <p className="text-base font-bold text-amber-400 truncate">{formatCurrency(e.minimum_price)}</p>
           </div>
-          <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-center">
-            <p className="text-xs text-primary font-medium">Recommended</p>
-            <p className="text-base font-bold text-primary">{formatCurrency(e.recommended_price)}</p>
+          <div className="min-w-0 rounded-lg bg-primary/5 border border-primary/20 p-3 text-center">
+            <p className="text-[10px] text-primary font-medium leading-tight">Recommended</p>
+            <p className="text-base font-bold text-primary truncate">{formatCurrency(e.recommended_price)}</p>
           </div>
-          <div className="rounded-lg bg-secondary/30 p-3 text-center">
-            <p className="text-xs text-muted-foreground">Premium</p>
-            <p className="text-base font-bold text-violet-400">{formatCurrency(e.premium_price)}</p>
+          <div className="min-w-0 rounded-lg bg-secondary/30 p-3 text-center">
+            <p className="text-[10px] text-muted-foreground leading-tight">Premium</p>
+            <p className="text-base font-bold text-violet-400 truncate">{formatCurrency(e.premium_price)}</p>
           </div>
         </div>
       </div>
@@ -127,6 +127,60 @@ export default function EstimateDetail() {
               <p className="text-sm text-foreground/80">{s.message}</p>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Job Analysis (read-only summary — edit from the estimate flow) */}
+      {e.job_analysis && Object.keys(e.job_analysis).length > 0 && (
+        <div className="rounded-xl border border-border/50 bg-card/50 p-6 space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h2 className="text-base font-semibold">Job Analysis</h2>
+            <div className="flex items-center gap-2">
+              {e.analysis_confidence != null && (
+                <span className="text-xs font-medium px-2.5 py-1 rounded-full border bg-primary/10 text-primary border-primary/30">
+                  {Math.round(e.analysis_confidence)}% confidence
+                </span>
+              )}
+              {e.job_analysis.risk?.level && (
+                <span className="text-xs font-medium px-2.5 py-1 rounded-full border bg-secondary/50 capitalize">
+                  {e.job_analysis.risk.level.replace(/_/g, " ")} risk
+                </span>
+              )}
+            </div>
+          </div>
+          {e.job_analysis.jobSummary && <p className="text-sm text-foreground/80">{e.job_analysis.jobSummary}</p>}
+          <div className="grid sm:grid-cols-2 gap-x-8 gap-y-2 text-sm">
+            <div className="flex justify-between py-1 border-b border-border/20">
+              <span className="text-muted-foreground">Trade</span>
+              <span>{e.job_analysis.primaryTrade || "—"}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-border/20">
+              <span className="text-muted-foreground">Crew size</span>
+              <span>{e.job_analysis.crewSize?.recommended || "—"}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-border/20">
+              <span className="text-muted-foreground">Total labor hours</span>
+              <span>{e.job_analysis.totalLaborHours ?? "—"}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-border/20">
+              <span className="text-muted-foreground">Complexity</span>
+              <span className="capitalize">{(e.job_analysis.complexity?.level || "—").replace(/_/g, " ")}</span>
+            </div>
+          </div>
+          {(e.job_analysis.missingInformation || []).length > 0 && (
+            <div className="pt-2">
+              <p className="text-xs text-muted-foreground mb-1">Missing information</p>
+              <ul className="text-sm text-foreground/80 space-y-1">
+                {e.job_analysis.missingInformation.map((m, i) => <li key={i}>• {m}</li>)}
+              </ul>
+            </div>
+          )}
+          {e.labor_compensation?.recommendedComp != null && (
+            <div className="flex items-center justify-between pt-2 border-t border-border/30">
+              <span className="text-sm font-medium">Recommended labor compensation</span>
+              <span className="text-base font-bold text-primary">{formatCurrency(e.labor_compensation.recommendedComp)}</span>
+            </div>
+          )}
         </div>
       )}
 

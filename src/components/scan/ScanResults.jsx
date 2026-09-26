@@ -5,6 +5,7 @@ import { formatCurrency } from "@/lib/estimateCalculations";
 import SimilarJobsPanel from "@/components/scan/SimilarJobsPanel";
 import ScanBreakdown from "@/components/scan/ScanBreakdown";
 import ScanAdjustments from "@/components/scan/ScanAdjustments";
+import JobAnalysisPanel from "@/components/estimate/job-analysis/JobAnalysisPanel";
 
 const confidenceStyles = {
   high: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
@@ -15,12 +16,12 @@ const confidenceStyles = {
 function PriceTier({ label, value, highlighted }) {
   return (
     <div
-      className={`rounded-lg p-3 text-center ${
+      className={`min-w-0 rounded-lg p-3 text-center ${
         highlighted ? "bg-primary/10 border border-primary/30" : "bg-secondary/40"
       }`}
     >
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={`text-lg font-bold ${highlighted ? "text-primary" : ""}`}>
+      <p className="text-[10px] text-muted-foreground leading-tight">{label}</p>
+      <p className={`text-lg font-bold truncate ${highlighted ? "text-primary" : ""}`}>
         {formatCurrency(value)}
       </p>
     </div>
@@ -36,6 +37,7 @@ export default function ScanResults({
   onSave,
   saving,
   onRescan,
+  onAddPhotos,
 }) {
   return (
     <div className="space-y-6">
@@ -102,6 +104,8 @@ export default function ScanResults({
       </div>
 
       <ScanBreakdown data={data} aiMeta={aiMeta} />
+
+      <JobAnalysisPanel data={data} onChange={setData} onAddPhotos={onAddPhotos} />
 
       <SimilarJobsPanel
         jobType={data.job_type}

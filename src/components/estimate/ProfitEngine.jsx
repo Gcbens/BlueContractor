@@ -35,7 +35,7 @@ export default function ProfitEngine({ data, onChange }) {
       <div>
         <h2 className="text-lg font-semibold">Profit Engine</h2>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Live profit calculations — updated as you type
+          Live profit calculations, updated as you type
         </p>
       </div>
 

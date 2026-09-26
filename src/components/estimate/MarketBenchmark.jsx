@@ -173,7 +173,7 @@ Return realistic USD price ranges that contractors actually charge for THIS spec
                 {scoreVerdict(score).label} Pricing
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                {score >= 80 && "You're priced competitively with healthy margins — strong profit potential."}
+                {score >= 80 && "You're priced competitively with healthy margins. Strong profit potential."}
                 {score >= 60 && score < 80 && "Solid pricing. Small tweaks could unlock more profit."}
                 {score >= 40 && score < 60 && "Pricing is okay but you may be leaving money on the table or risking the job."}
                 {score < 40 && "Warning: your price may be too low to profit or too high to win the job."}
@@ -221,8 +221,8 @@ Return realistic USD price ranges that contractors actually charge for THIS spec
               </p>
               <p className="text-muted-foreground mt-0.5">
                 {pctVsMarket < -5 && `You may be leaving ${formatCurrency(market.market_typical - recommendedPrice)} on the table.`}
-                {pctVsMarket > 10 && "Priced above market — higher profit if won, but higher risk of losing the job."}
-                {pctVsMarket >= -5 && pctVsMarket <= 10 && "Well positioned — competitive and profitable."}
+                {pctVsMarket > 10 && "Priced above market. Higher profit if won, but higher risk of losing the job."}
+                {pctVsMarket >= -5 && pctVsMarket <= 10 && "Well positioned: competitive and profitable."}
               </p>
             </div>
           </div>

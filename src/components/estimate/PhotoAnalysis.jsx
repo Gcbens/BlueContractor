@@ -1,29 +1,15 @@
 import React, { useState, useRef } from "react";
-import { invokeAI } from "@/lib/aiClient";
 import { uploadFile } from "@/lib/uploadFile";
+import { runJobAnalysis, flattenForPricing, buildLaborCompensation, computeOverallConfidence, mergeWithOverrides } from "@/lib/jobAnalysis";
 import { Button } from "@/components/ui/button";
-import { Upload, Loader2, Sparkles, Camera, AlertTriangle, X } from "lucide-react";
+import { Upload, Loader2, Sparkles, Camera, X } from "lucide-react";
 import { Image } from "@/components/ui/image";
-import { motion, AnimatePresence } from "framer-motion";
-
-const detectableItems = [
-  "Furniture", "Cabinets", "Appliances", "Stairs", "Heavy Items",
-  "Windows", "Doors", "Walls", "Trees", "Debris", "Hazards",
-];
-
-const categoryColors = {
-  labor: "bg-blue-500/10 text-blue-400 border-blue-500/30",
-  equipment: "bg-violet-500/10 text-violet-400 border-violet-500/30",
-  material: "bg-indigo-500/10 text-indigo-400 border-indigo-500/30",
-  hidden_cost: "bg-amber-500/10 text-amber-400 border-amber-500/30",
-  safety: "bg-red-500/10 text-red-400 border-red-500/30",
-};
+import JobAnalysisPanel from "@/components/estimate/job-analysis/JobAnalysisPanel";
 
 export default function PhotoAnalysis({ data, onChange }) {
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState(data.ai_photo_analysis || []);
-  const [detectedItems, setDetectedItems] = useState([]);
+  const [error, setError] = useState("");
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
   const photos = data.photo_urls || [];
@@ -39,62 +25,37 @@ export default function PhotoAnalysis({ data, onChange }) {
     const updated = [...photos, ...newUrls];
     onChange({ ...data, photo_urls: updated });
     setUploading(false);
-    analyzePhotos(newUrls);
+    analyzePhotos(updated);
   };
 
   const analyzePhotos = async (urls) => {
     if (!urls || urls.length === 0) return;
     setAnalyzing(true);
-    const desc = (data.job_description || "").trim();
-    let prompt = `You are an expert contractor estimator analyzing job site photos. For each photo, identify relevant items and suggest how they affect the estimate.
-
-Look for: furniture, cabinets, appliances, stairs, heavy items, windows, doors, walls, trees, debris, and hazards.
-
-Pay special attention to weight — heavy or bulky items (appliances, furniture, debris, construction materials) increase labor, equipment, fuel, and disposal costs. Note estimated weight where it affects the estimate.
-
-For each detected item, provide:
-- The item name
-- A suggestion for additional labor, equipment, material, or hidden cost
-- Category: "labor", "equipment", "material", "hidden_cost", or "safety"
-
-Be practical and specific. Focus on things that affect cost or safety.`;
-    if (desc) {
-      prompt += `\n\nThe contractor described the job as: "${desc}". Use this context to make your suggestions more accurate.`;
-    }
-
+    setError("");
     try {
-      const result = await invokeAI({
-        prompt,
-        file_urls: urls,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            detected_items: {
-              type: "array",
-              items: { type: "string" },
-            },
-            suggestions: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  item: { type: "string" },
-                  suggestion: { type: "string" },
-                  category: { type: "string", enum: ["labor", "equipment", "material", "hidden_cost", "safety"] },
-                },
-                required: ["item", "suggestion", "category"],
-              },
-            },
-          },
-        },
+      let analysis = await runJobAnalysis(urls, data.job_description);
+      // A re-analysis (e.g. after adding more photos) must never silently
+      // discard fields the contractor already corrected by hand, or the
+      // AI-vs-confirmed feedback history recorded for them.
+      analysis = mergeWithOverrides(analysis, data.job_analysis?.overrides, data.job_analysis?.feedback);
+
+      const flattened = flattenForPricing(analysis);
+      const laborComp = buildLaborCompensation(analysis, data.hourly_rate || flattened.hourly_rate);
+      const confidence = computeOverallConfidence(analysis);
+      // Never let the AI overwrite the contractor's own typed description.
+      const { job_description, ...fields } = flattened;
+
+      onChange({
+        ...data,
+        ...fields,
+        photo_urls: urls,
+        job_analysis: analysis,
+        labor_compensation: laborComp,
+        analysis_confidence: confidence,
       });
-      setDetectedItems(result.detected_items || []);
-      const newAnalysis = result.suggestions || [];
-      const combined = [...analysis, ...newAnalysis];
-      setAnalysis(combined);
-      onChange({ ...data, photo_urls: photos, ai_photo_analysis: combined });
     } catch (e) {
-      /* keep existing analysis */
+      console.error("Job analysis failed:", e);
+      setError("AI analysis failed. You can still fill the estimate manually below.");
     }
     setAnalyzing(false);
   };
@@ -112,7 +73,7 @@ Be practical and specific. Focus on things that affect cost or safety.`;
           <h2 className="text-lg font-semibold">AI Photo Analysis</h2>
         </div>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Upload job site photos — AI identifies items and suggests additional costs
+          Upload job site photos and AI identifies items and suggests additional costs
         </p>
       </div>
 
@@ -198,72 +159,22 @@ Be practical and specific. Focus on things that affect cost or safety.`;
       {analyzing && (
         <div className="rounded-xl bg-primary/5 border border-primary/20 p-6 text-center">
           <Loader2 className="w-6 h-6 text-primary animate-spin mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">AI analyzing photos for hidden costs...</p>
+          <p className="text-sm text-muted-foreground">AI analyzing the job like an estimator would: dimensions, materials, access, labor…</p>
         </div>
       )}
 
-      {/* Detected Items */}
-      {!analyzing && detectedItems.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            AI Detected
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {detectedItems.map((item, i) => (
-              <span key={i} className="text-xs font-medium px-2.5 py-1 rounded-full bg-secondary/50 text-muted-foreground">
-                {item}
-              </span>
-            ))}
-          </div>
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
         </div>
       )}
 
-      {/* AI Suggestions */}
-      <AnimatePresence>
-        {!analyzing && analysis.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="space-y-3"
-          >
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                AI Suggestions from Photos
-              </p>
-            </div>
-            {analysis.map((s, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }}
-                className={`rounded-xl border p-4 ${categoryColors[s.category] || categoryColors.hidden_cost}`}
-              >
-                <div className="flex items-start gap-3">
-                  {s.category === "safety" ? (
-                    <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                  ) : (
-                    <Sparkles className="w-4 h-4 mt-0.5 shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium uppercase tracking-wide opacity-70 mb-0.5">
-                      {s.item}
-                    </p>
-                    <p className="text-sm">{s.suggestion}</p>
-                  </div>
-                  <span className="text-xs font-medium capitalize opacity-60 shrink-0">
-                    {s.category.replace("_", " ")}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!analyzing && (
+        <JobAnalysisPanel data={data} onChange={onChange} onAddPhotos={() => fileInputRef.current?.click()} />
+      )}
 
       {/* Re-analyze button */}
-      {photos.length > 0 && !analyzing && analysis.length === 0 && (
+      {photos.length > 0 && !analyzing && !data.job_analysis?.jobType && (
         <Button
           onClick={() => analyzePhotos(photos)}
           variant="outline"

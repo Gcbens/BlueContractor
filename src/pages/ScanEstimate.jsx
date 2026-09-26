@@ -55,17 +55,21 @@ export default function ScanEstimate() {
     setStage("analyzing");
     setError("");
     try {
-      const { estimateFields, ai_photo_analysis, meta } = await analyzeJobPhotos(urls);
+      const { estimateFields, ai_photo_analysis, job_analysis, labor_compensation, analysis_confidence, meta } = await analyzeJobPhotos(urls);
       setData({
         ...DEFAULT_DATA,
         ...estimateFields,
         photo_urls: photos,
         ai_photo_analysis,
+        job_analysis,
+        labor_compensation,
+        analysis_confidence,
       });
       setAiMeta(meta);
       setSimilarJobs(await fetchSimilarJobs(estimateFields.job_type));
       setStage("results");
     } catch (e) {
+      console.error("Job analysis failed:", e);
       setError("AI analysis failed. Try retaking the photo or uploading a clearer image.");
       setStage("capture");
     }
@@ -114,7 +118,7 @@ export default function ScanEstimate() {
               <ScanLine className="w-6 h-6 text-primary" /> Scan Estimate
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {stage === "capture" && "Snap a photo — AI prices the job"}
+              {stage === "capture" && "Snap a photo and AI prices the job"}
               {stage === "analyzing" && "AI is analyzing your photo…"}
               {stage === "results" && "Review and adjust the AI estimate"}
             </p>
@@ -158,6 +162,7 @@ export default function ScanEstimate() {
               onSave={handleSave}
               saving={saving}
               onRescan={rescan}
+              onAddPhotos={rescan}
             />
           )}
         </div>

@@ -69,7 +69,7 @@ Deno.serve(async (req: Request) => {
 
   const body: Record<string, unknown> = {
     model: model || DEFAULT_MODEL,
-    max_tokens: 8000,
+    max_tokens: 12000,
     messages: [{ role: "user", content }],
   };
   if (tools.length > 0) body.tools = tools;

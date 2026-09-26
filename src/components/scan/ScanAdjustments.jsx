@@ -36,7 +36,7 @@ export default function ScanAdjustments({ data, setData }) {
         <SlidersHorizontal className="w-4 h-4 text-primary" />
         <h3 className="text-sm font-semibold">Adjust the Estimate</h3>
         <span className="text-xs text-muted-foreground ml-1">
-          Correct anything the AI got wrong — price updates live
+          Correct anything the AI got wrong, price updates live
         </span>
       </div>
 

@@ -2,7 +2,7 @@ import React from "react";
 import { formatCurrency } from "@/lib/estimateCalculations";
 import { TrendingUp, TrendingDown, Minus, History } from "lucide-react";
 
-export default function SimilarJobsPanel({ jobType, similarJobs, recommendedPrice }) {
+export default function SimilarJobsPanel({ similarJobs, recommendedPrice }) {
   const priced = similarJobs.filter((j) => (j.recommended_price || 0) > 0);
   const count = priced.length;
 
@@ -14,9 +14,9 @@ export default function SimilarJobsPanel({ jobType, similarJobs, recommendedPric
           <h3 className="text-sm font-semibold">Similar Jobs</h3>
         </div>
         <p className="text-xs text-muted-foreground">
-          No past {jobType || "similar"} jobs yet. This estimate is priced from the AI
-          breakdown and our profit engine — it'll calibrate to your history as you
-          complete more jobs.
+          No similar jobs yet. This estimate is based on the AI breakdown and our
+          profit engine. As you complete more jobs, pricing will adjust based on
+          your history.
         </p>
       </div>
     );

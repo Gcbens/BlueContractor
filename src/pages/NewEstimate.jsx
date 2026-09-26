@@ -15,6 +15,7 @@ import StepEquipment from "@/components/estimate/StepEquipment";
 import ProfitEngine from "@/components/estimate/ProfitEngine";
 import MarketBenchmark from "@/components/estimate/MarketBenchmark";
 import AIReview from "@/components/estimate/AIReview";
+import JobAnalysisPanel from "@/components/estimate/job-analysis/JobAnalysisPanel";
 import { motion, AnimatePresence } from "framer-motion";
 import CameraCapture from "@/components/scan/CameraCapture";
 import { analyzeJobPhotos } from "@/lib/scanEstimate";
@@ -80,7 +81,7 @@ export default function NewEstimate() {
     setScanNote("");
     setScanMeta(null);
     try {
-      const { estimateFields, ai_photo_analysis, meta } = await analyzeJobPhotos(urls, data.job_description);
+      const { estimateFields, ai_photo_analysis, job_analysis, labor_compensation, analysis_confidence, meta } = await analyzeJobPhotos(urls, data.job_description);
       // Never let the AI overwrite the contractor's own typed description.
       const { job_description, ...fields } = estimateFields;
       setData((d) => ({
@@ -88,6 +89,9 @@ export default function NewEstimate() {
         ...fields,
         photo_urls: [...(d.photo_urls || []), ...urls],
         ai_photo_analysis: [...(d.ai_photo_analysis || []), ...ai_photo_analysis],
+        job_analysis,
+        labor_compensation,
+        analysis_confidence,
       }));
       setScanMeta(meta || null);
       const weightNote = estimateFields.weight
@@ -97,7 +101,8 @@ export default function NewEstimate() {
         `AI pre-filled your estimate${estimateFields.job_type ? ` for ${estimateFields.job_type}` : ""}${weightNote}${meta && meta.escalated ? " · low-confidence scan, re-checked with a stronger model" : ""}. Review the steps below.`
       );
     } catch (e) {
-      setScanError("AI scan failed — you can still fill the estimate manually below.");
+      console.error("Job analysis failed:", e);
+      setScanError("AI scan failed. You can still fill the estimate manually below.");
     }
     setScanning(false);
   };
@@ -111,7 +116,7 @@ export default function NewEstimate() {
       <>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-foreground">Quick estimate ready</h3>
+            <h3 className="text-lg font-semibold text-foreground">Quick Estimate Ready</h3>
             <p className="text-xs text-muted-foreground mt-0.5">Add a customer name and save, or refine in detailed steps.</p>
           </div>
           <div className="text-right shrink-0">
@@ -120,17 +125,17 @@ export default function NewEstimate() {
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-lg bg-secondary/40 p-3">
-            <p className="text-xs text-muted-foreground">Net profit</p>
-            <p className="text-base font-semibold text-foreground">{formatCurrency(calc.net_profit)}</p>
+          <div className="min-w-0 rounded-lg bg-secondary/40 p-3">
+            <p className="text-xs text-muted-foreground break-words leading-tight">Net profit</p>
+            <p className="text-base font-semibold text-foreground truncate">{formatCurrency(calc.net_profit)}</p>
           </div>
-          <div className="rounded-lg bg-secondary/40 p-3">
-            <p className="text-xs text-muted-foreground">Margin</p>
-            <p className="text-base font-semibold text-foreground">{calc.profit_margin}%</p>
+          <div className="min-w-0 rounded-lg bg-secondary/40 p-3">
+            <p className="text-xs text-muted-foreground break-words leading-tight">Margin</p>
+            <p className="text-base font-semibold text-foreground truncate">{calc.profit_margin}%</p>
           </div>
-          <div className="rounded-lg bg-secondary/40 p-3">
-            <p className="text-xs text-muted-foreground">Min price</p>
-            <p className="text-base font-semibold text-foreground">{formatCurrency(calc.minimum_price)}</p>
+          <div className="min-w-0 rounded-lg bg-secondary/40 p-3">
+            <p className="text-xs text-muted-foreground break-words leading-tight">Min price</p>
+            <p className="text-base font-semibold text-foreground truncate">{formatCurrency(calc.minimum_price)}</p>
           </div>
         </div>
         {data.weight ? (
@@ -145,6 +150,9 @@ export default function NewEstimate() {
             <p className="text-xs text-muted-foreground leading-relaxed">{scanMeta.notes}</p>
           </div>
         ) : null}
+        {data.job_analysis && (
+          <JobAnalysisPanel data={data} onChange={setData} onAddPhotos={() => setMode("detailed")} />
+        )}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-foreground">Customer name <span className="text-destructive">*</span></label>
           <input
@@ -199,7 +207,7 @@ export default function NewEstimate() {
 
       navigate(`/estimate/${estimate.id}`);
     } catch (e) {
-      setSaveError("Couldn't save the estimate — please try again.");
+      setSaveError("Couldn't save the estimate. Please try again.");
       setSaving(false);
     }
   };
@@ -324,7 +332,7 @@ export default function NewEstimate() {
                 <textarea
                   value={data.job_description || ""}
                   onChange={(e) => setData((d) => ({ ...d, job_description: e.target.value }))}
-                  placeholder="e.g. Remove old carpet and haul away debris from a 2nd floor apartment — about 600 sq ft, heavy furniture needs moving"
+                  placeholder="e.g. Remove old carpet and haul away debris from a 2nd floor apartment, about 600 sq ft, heavy furniture needs moving"
                   rows={3}
                   className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                 />

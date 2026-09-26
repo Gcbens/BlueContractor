@@ -24,7 +24,7 @@ export default function CameraCapture({ photos, setPhotos, onCapture, disabled }
       setPhotos([...photos, ...newUrls]);
       setPending((p) => [...p, ...newUrls]);
     } catch (e) {
-      setUploadError("Upload failed — check your connection and try again.");
+      setUploadError("Upload failed. Check your connection and try again.");
     } finally {
       setUploading(false);
     }
@@ -52,7 +52,7 @@ export default function CameraCapture({ photos, setPhotos, onCapture, disabled }
         <h2 className="text-xl font-semibold">Scan a Job Site</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Snap a photo of the materials, area, or job site. AI identifies the scope,
-          materials, labor, and hidden costs — then prices the job for you.
+          materials, labor, and hidden costs, then prices the job for you.
         </p>
       </div>
 

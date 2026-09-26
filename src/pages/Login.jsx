@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Mail, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
-import logo from "../../New Blue Contractor Logo.png";
+
+const logo = "/branding/logo-dark.png";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -41,6 +42,7 @@ export default function Login() {
   return (
     <AuthLayout
       logo={logo}
+      wallpaper
       title="Welcome back"
       subtitle="Log in to your account"
       footer={

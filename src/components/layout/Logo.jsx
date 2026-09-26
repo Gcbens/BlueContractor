@@ -12,14 +12,14 @@ export default function Logo({ size = "md" }) {
     <Link to="/" className="flex items-center group shrink-0">
       <img
         src={logo}
-        alt="BlueContractor — Plan. Price. Profit."
+        alt="BlueContractor: Plan. Price. Profit."
         height={darkHeight}
         style={{ height: darkHeight, width: "auto" }}
         className="logo-seamless logo-dark block object-contain"
       />
       <img
         src={lightLogo}
-        alt="BlueContractor — Plan. Price. Profit."
+        alt="BlueContractor: Plan. Price. Profit."
         height={height}
         style={{ height, width: "auto" }}
         className="logo-light block object-contain"
